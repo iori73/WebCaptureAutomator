@@ -1,3 +1,4 @@
+# app.py
 from flask import Flask, render_template, request, jsonify, send_file
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -9,6 +10,8 @@ import io
 from zipfile import ZipFile
 
 app = Flask(__name__)
+
+
 
 # ---
 import logging
@@ -34,18 +37,19 @@ def take_screenshots():
     urls = request.json.get('urls', [])
     print(f"受け取ったURL数: {len(urls)}")
     
+    # o1
+    CHROME_BIN = "/usr/bin/google-chrome"        # インストール先に合わせる（apt-get ならだいたいこれ）
+    CHROMEDRIVER_PATH = "/usr/bin/chromedriver" # aptで入れたchromedriverの実体パス
+
     options = Options()
+    options.binary_location = CHROME_BIN
     options.add_argument('--headless')
-    options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--disable-software-rasterizer')
-    options.add_argument('--disable-extensions')
-    options.binary_location = os.environ.get("GOOGLE_CHROME_BIN", "/opt/render/project/.render/chrome/opt/google/chrome/chrome")
+    options.add_argument('--disable-gpu')
 
 
-
-    service = Service(ChromeDriverManager().install())
+    service = Service(CHROMEDRIVER_PATH)
     
     screenshots = []
     for index, url in enumerate(urls, 1):
