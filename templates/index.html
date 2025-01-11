@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webページスクリーンショット</title>
+    <style>
+        body { margin: 20px; font-family: Arial, sans-serif; }
+        .container { max-width: 800px; margin: 0 auto; }
+        textarea { width: 100%; margin: 10px 0; }
+        button { padding: 10px 20px; }
+        .result-item { margin: 20px 0; padding: 10px; border: 1px solid #ddd; }
+        img { max-width: 100%; height: auto; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Webページスクリーンショット取得</h1>
+        <div>
+            <h2>URLを入力（1行に1つのURL）</h2>
+            <textarea id="urls" rows="5" placeholder="https://example.com"></textarea>
+            <button onclick="takeScreenshots()">スクリーンショット取得</button>
+        </div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+    async function takeScreenshots() {
+        const urls = document.getElementById('urls').value
+            .split('\n')
+            .filter(url => url.trim() !== '');
+        
+        const response = await fetch('/screenshot', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ urls: urls })
+        });
+        
+        const results = await response.json();
+        displayResults(results);
+    }
+
+    function displayResults(results) {
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = results.map(result => `
+            <div class="result-item">
+                <p>URL: ${result.url}</p>
+                <p>Status: ${result.status}</p>
+                ${result.filename ? 
+                    `<img src="/static/screenshots/${result.filename}">` : 
+                    `<p>Error: ${result.message}</p>`}
+            </div>
+        `).join('');
+    }
+    </script>
+</body>
+</html>
