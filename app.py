@@ -30,6 +30,9 @@ def take_screenshots():
     options.add_argument('--disable-gpu')
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-setuid-sandbox')  # 追加
+    options.add_argument('--single-process')  # 追加
+    options.add_argument('--disable-extensions')  # 追加
 
     # # Macの場合のChrome位置を指定
     # if os.path.exists('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'):
