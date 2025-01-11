@@ -45,16 +45,14 @@ def take_screenshots():
     # options.add_argument('--disable-software-rasterizer')
 
 
-    # # Macの場合のChrome位置を指定
-    # if os.path.exists('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'):
-    #     options.binary_location = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
-    # else:
-    #     # Render環境用の設定
-    #     options.binary_location = os.environ.get("GOOGLE_CHROME_BIN", "/usr/bin/google-chrome")
-    
+    # Macの場合のChrome位置を指定
+    if os.path.exists('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'):
+        options.binary_location = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    else:
+        # Render環境用の設定
+        options.binary_location = os.environ.get("GOOGLE_CHROME_BIN", "/usr/bin/google-chrome")
     
     # options.binary_location = os.environ.get("GOOGLE_CHROME_BIN", "/opt/render/project/.render/chrome/opt/google/chrome/chrome")
-    options.binary_location = os.environ.get("GOOGLE_CHROME_BIN", "/usr/bin/google-chrome")
 
 
     service = Service(ChromeDriverManager().install())
