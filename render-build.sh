@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Chrome のインストール
-wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
-apt-get update
-apt-get install -y google-chrome-stable
+curl -LO https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt-get update
+sudo apt-get install -y ./google-chrome-stable_current_amd64.deb
+rm google-chrome-stable_current_amd64.deb
