@@ -1,57 +1,125 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Webページスクリーンショット</title>
     <style>
-        body { margin: 20px; font-family: Arial, sans-serif; }
-        .container { max-width: 800px; margin: 0 auto; }
-        textarea { width: 100%; margin: 10px 0; }
-        button { padding: 10px 20px; }
-        .result-item { margin: 20px 0; padding: 10px; border: 1px solid #ddd; }
-        img { max-width: 100%; height: auto; margin-top: 10px; }
+      body {
+        margin: 20px;
+        font-family: Arial, sans-serif;
+      }
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      textarea {
+        width: 100%;
+        margin: 10px 0;
+      }
+      button {
+        padding: 10px 20px;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>Webページスクリーンショット取得</h1>
-        <div>
-            <h2>URLを入力（1行に1つのURL）</h2>
-            <textarea id="urls" rows="5" placeholder="https://example.com"></textarea>
-            <button onclick="takeScreenshots()">スクリーンショット取得</button>
-        </div>
-        <div id="results"></div>
+      <h1>Webページスクリーンショット取得</h1>
+      <div>
+        <h2>URLを入力（1行に1つのURL）</h2>
+        <textarea
+          id="urls"
+          rows="5"
+          placeholder="https://example.com"
+        ></textarea>
+        <button onclick="takeScreenshots()">スクリーンショット取得</button>
+      </div>
     </div>
 
     <script>
-    async function takeScreenshots() {
-        const urls = document.getElementById('urls').value
-            .split('\n')
-            .filter(url => url.trim() !== '');
-        
-        const response = await fetch('/screenshot', {
+      async function takeScreenshots() {
+        const urls = document
+          .getElementById('urls')
+          .value.split('\n')
+          .filter((url) => url.trim() !== '');
+
+        // ドメインのチェック
+        const domains = new Set(
+          urls.map((url) => {
+            try {
+              return url.split('//')[1].split('/')[0];
+            } catch (e) {
+              return '';
+            }
+          }),
+        );
+
+        // try {
+        //   const response = await fetch('/screenshot', {
+        //     method: 'POST',
+        //     headers: {
+        //       'Content-Type': 'application/json',
+        //     },
+        //     body: JSON.stringify({ urls: urls }),
+        //   });
+
+        //   if (response.ok) {
+        //     const blob = await response.blob();
+        //     const url = window.URL.createObjectURL(blob);
+        //     const a = document.createElement('a');
+        //     a.href = url;
+        //     // ドメイン数に応じてファイル名を設定
+        //     a.download =
+        //       domains.size === 1
+        //         ? `${Array.from(domains)[0]}.zip`
+        //         : 'screenshots.zip';
+        //     document.body.appendChild(a);
+        //     a.click();
+        //     window.URL.revokeObjectURL(url);
+        //     a.remove();
+        //   } else {
+        //     const errorData = await response.json();
+        //     alert(`Error: ${errorData.error || 'Unknown error occurred'}`);
+        //   }
+        // } catch (error) {
+        //   console.error('Error:', error);
+        //   alert('An error occurred while taking screenshots');
+        // }
+        try {
+          const response = await fetch('/screenshot', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ urls: urls })
-        });
-        
-        const results = await response.json();
-        displayResults(results);
-    }
+            body: JSON.stringify({ urls: urls }),
+          });
 
-    function displayResults(results) {
-        const resultsDiv = document.getElementById('results');
-        resultsDiv.innerHTML = results.map(result => `
-            <div class="result-item">
-                <p>URL: ${result.url}</p>
-                <p>Status: ${result.status}</p>
-                ${result.filename ? 
-                    `<img src="/static/screenshots/${result.filename}">` : 
-                    `<p>Error: ${result.message}</p>`}
-            </div>
-        `).join('');
-    }
+          if (response.ok) {
+            const contentType = response.headers.get('Content-Type');
+            if (contentType && contentType.includes('application/zip')) {
+              const blob = await response.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download =
+                domains.size === 1
+                  ? `${Array.from(domains)[0]}.zip`
+                  : 'screenshots.zip';
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              a.remove();
+            } else {
+              throw new Error('Invalid response type');
+            }
+          } else {
+            const text = await response.text();
+            console.error('Server response:', text);
+            alert('Error: Server returned an invalid response');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          alert('An error occurred while taking screenshots');
+        }
+      }
     </script>
-</body>
+  </body>
 </html>
