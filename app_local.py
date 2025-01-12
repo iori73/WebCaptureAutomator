@@ -1,3 +1,4 @@
+# app_local.py
 from flask import Flask, render_template, request, jsonify, send_file
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
@@ -28,7 +29,32 @@ def healthz():
 def index():
     return render_template('index.html')
 
-    
+
+
+def get_scrollable_height(driver):
+    return driver.execute_script("""
+        // スクロール可能な要素を探す
+        const scrollableElements = Array.from(document.querySelectorAll('*')).filter(el => {
+            const style = window.getComputedStyle(el);
+            return (style.overflow === 'auto' || style.overflow === 'scroll' || 
+                   style.overflowY === 'auto' || style.overflowY === 'scroll') &&
+                   el.scrollHeight > el.clientHeight;
+        });
+        
+        // 通常のページ高さも考慮
+        const normalHeight = Math.max(
+            document.body.scrollHeight,
+            document.documentElement.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.offsetHeight,
+            document.body.clientHeight,
+            document.documentElement.clientHeight
+        );
+        
+        // スクロール可能要素の高さと通常の高さを比較して最大値を返す
+        return Math.max(...scrollableElements.map(el => el.scrollHeight), normalHeight);
+    """)
+
 @app.route('/screenshot', methods=['POST'])
 def take_screenshots():
     urls = request.json.get('urls', [])
@@ -40,19 +66,13 @@ def take_screenshots():
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
 
-
-
-    # Macの場合のChrome位置を指定
     if os.path.exists('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'):
         options.binary_location = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
     else:
-        # Render環境用の設定
         options.binary_location = os.environ.get("GOOGLE_CHROME_BIN", "/usr/bin/google-chrome")
-    
-    # options.binary_location = os.environ.get("GOOGLE_CHROME_BIN", "/opt/render/project/.render/chrome/opt/google/chrome/chrome")
 
-
-    service = Service(ChromeDriverManager().install())
+    CHROMEDRIVER_PATH = "/opt/homebrew/bin/chromedriver"
+    service = Service(CHROMEDRIVER_PATH)
     
     screenshots = []
     for index, url in enumerate(urls, 1):
@@ -60,46 +80,17 @@ def take_screenshots():
             driver = webdriver.Chrome(service=service, options=options)
             print(f"処理中 {index}/{len(urls)}: {url}")
             driver.get(url)
-            time.sleep(10) 
+            time.sleep(10)
             
             wait_time = 0
-            while wait_time < 30:  # 最大30秒まで追加で待機
+            while wait_time < 30:
                 if driver.execute_script("return document.readyState") == "complete":
                     break
                 time.sleep(1)
                 wait_time += 1
             
-            if "m3.material.io" in url:
-                total_height = driver.execute_script("""
-                    const container = document.querySelector('.page-content.page-content-height.ng-tns-c33-0');
-                    if (container) {
-                        return Math.max(
-                            container.scrollHeight,
-                            container.offsetHeight,
-                            container.clientHeight
-                        );
-                    } else {
-                        return Math.max(
-                            document.body.scrollHeight,
-                            document.documentElement.scrollHeight,
-                            document.body.offsetHeight,
-                            document.documentElement.offsetHeight,
-                            document.body.clientHeight,
-                            document.documentElement.clientHeight
-                        );
-                    }
-                """)
-            else:
-                total_height = driver.execute_script("""
-                    return Math.max(
-                        document.body.scrollHeight,
-                        document.documentElement.scrollHeight,
-                        document.body.offsetHeight,
-                        document.documentElement.offsetHeight,
-                        document.body.clientHeight,
-                        document.documentElement.clientHeight
-                    );
-                """)
+            # 新しい高さ取得関数を使用
+            total_height = get_scrollable_height(driver)
             
             max_height = 90000
             if total_height > max_height:
@@ -110,29 +101,22 @@ def take_screenshots():
             driver.set_window_size(1440, total_height)
             time.sleep(2)
             
-            driver.execute_script("return document.readyState") == "complete"
-            time.sleep(1)
-            
-
-            
-            # ファイル名生成部分を修正
+            # ファイル名生成
             url_parts = url.split('//')
             if len(url_parts) > 1:
-                domain = url_parts[1].split('/')[0]  
-                path_parts = url_parts[1].split('/', 1)  
+                domain = url_parts[1].split('/')[0]
+                path_parts = url_parts[1].split('/', 1)
                 if len(path_parts) > 1:
                     filename = f"{domain}_{path_parts[1].replace('/', '_')}.png"
                 else:
                     filename = f"{domain}_index.png"
             else:
                 filename = f"index_{index}.png"
-
-        
+            
             img_binary = io.BytesIO()
-            img_data = driver.get_screenshot_as_png()  
+            img_data = driver.get_screenshot_as_png()
             img_binary.write(img_data)
             img_binary.seek(0)
-            
             
             screenshots.append({
                 'binary': img_binary,
@@ -150,13 +134,11 @@ def take_screenshots():
                 driver.quit()
             except:
                 pass
-        # except Exception as e:
-        #     app.logger.error(f"Chrome起動エラー: {str(e)}")
-        #     try:
-        #         driver.quit()
-        #     except:
-        #         pass
-        #     raise
+
+    # 以下のZIPファイル作成部分は変更なし
+
+
+
 
     
     print(f"処理完了 - 成功: {len([s for s in screenshots if s['status'] == 'success'])}/{len(urls)}")

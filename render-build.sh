@@ -1,4 +1,5 @@
-# ローカル
+# # render-build.sh
+# # ローカル
 # #!/usr/bin/env bash
 # # exit on error
 # set -o errexit
@@ -17,6 +18,8 @@
 # fi
 
 
+
+# # 😭render用だけどできない
 #!/usr/bin/env bash
 set -o errexit  # 途中でエラーが出たら止める
 
