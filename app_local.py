@@ -135,11 +135,6 @@ def take_screenshots():
             except:
                 pass
 
-    # 以下のZIPファイル作成部分は変更なし
-
-
-
-
     
     print(f"処理完了 - 成功: {len([s for s in screenshots if s['status'] == 'success'])}/{len(urls)}")
     

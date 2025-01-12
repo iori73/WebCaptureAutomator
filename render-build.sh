@@ -19,7 +19,9 @@
 
 
 
-# # 😭render用だけどできない
+
+
+# # render-build.sh
 #!/usr/bin/env bash
 set -o errexit  # 途中でエラーが出たら止める
 
